@@ -1,6 +1,6 @@
-import Hero from "@/components/ui/hero";
-import Footer from "@/components/ui/footer";
-import Exercise from "@/components/ui/exercise";
+import Hero from "@/components/ui/Hero";
+import Footer from "@/components/ui/Footer";
+import Exercise from "@/components/ui/Exercise";
 
 export default function Home() {
   return (
