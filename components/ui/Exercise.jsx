@@ -58,21 +58,29 @@ export default function Exercise() {
       return;
     }
     setGenerateButton(true);
-    const res = await axios.post("/api/chat/generate", { language: language });
-    const { data } = res;
-    console.log(data.verbs);
+    try {
+      const res = await axios.post("/api/chat/generate", {
+        language: language,
+      });
+      const { data } = res;
+      console.log(data.verbs);
 
-    const shuffledVerbs = data.verbs
-      .map((value) => ({ value, sort: Math.random() }))
-      .sort((a, b) => a.sort - b.sort)
-      .map(({ value }) => value);
+      const shuffledVerbs = data.verbs
+        .map((value) => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
 
-    toast.success("Succesfully generated blanks.");
+      toast.success("Succesfully generated blanks.");
 
-    setVerbs(shuffledVerbs);
-    setBlanks(data.sentences);
-    setGenerateButton(false);
-    setPhase("second");
+      setVerbs(shuffledVerbs);
+      setBlanks(data.sentences);
+      setGenerateButton(false);
+      setPhase("second");
+    } catch (error) {
+      setGenerateButton(false);
+      toast.error("An error occured. Please try again.");
+      console.log(error);
+    }
   };
 
   // calls results api and produce explanations
@@ -89,34 +97,43 @@ export default function Exercise() {
       }
     }
     setCheckButton(true);
-    // convert blanks into complete sentences array
-    const filled = [];
-    blanks.forEach((s, i) => {
-      const finalAnswer = s.replace("_", answers[i]);
-      filled.push(finalAnswer);
-    });
+    try {
+      // convert blanks into complete sentences array
+      const filled = [];
+      blanks.forEach((s, i) => {
+        const finalAnswer = s.replace("_", answers[i]);
+        filled.push(finalAnswer);
+      });
 
-    // console.log(filled);
-    // calls api to check the anwers
-    const toastRes = axios.post("/api/chat/result", { sentences: filled });
+      // console.log(filled);
+      // calls api to check the anwers
+      const toastRes = axios.post("/api/chat/result", { sentences: filled });
 
-    toast.promise(toastRes, {
-      loading: "Checking the submitted answers...",
-      success: "Succesfully checked!",
-      error: "An error occured. Please try again!",
-    });
+      toast.promise(toastRes, {
+        loading: "Checking the submitted answers...",
+        success: "Succesfully checked!",
+        error: (e) => {
+          console.log(e);
+          setCheckButton(false);
+          return "An error occured. Please try again!";
+        },
+      });
 
-    const res = await toastRes;
-
-    const { data } = res;
-    setResponses(data);
-    setCheckButton(false);
-    setPhase("third");
-    console.log(data);
+      const res = await toastRes;
+      const { data } = res;
+      setResponses(data);
+      setCheckButton(false);
+      setPhase("third");
+      console.log(data);
+    } catch (error) {
+      setCheckButton(false);
+      toast.error("An error occured. Please try again.");
+      console.log(error);
+    }
   };
 
   return (
-    <Card className="mx-auto sm:w-[80%] ">
+    <Card className="mx-auto sm:w-[80%] border-zinc-200 shadow-lg">
       <Toaster position="top-center" reverseOrder={false} />
       <CardHeader>
         <h2 className="text-2xl font-bold">Fill in the Verbs</h2>
@@ -269,6 +286,12 @@ export default function Exercise() {
                 );
               })}
             </ul>
+            <Button
+              className="mx-2 bg-green-500 text-white hover:bg-green-700"
+              onClick={() => setPhase("first")}
+            >
+              Continue
+            </Button>
           </div>
         )}
       </CardContent>
