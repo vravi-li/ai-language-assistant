@@ -6,7 +6,7 @@ const openai = new OpenAI({
 
 export async function POST(req) {
   const request = await req.json();
-  const { language } = request;
+  const { language, situation } = request;
   // difficulty level in future
   // const template = {
   //   verbs: [
@@ -54,6 +54,9 @@ export async function POST(req) {
     AI assistant will utilize the provided template structure to generate similar template for the language specified for language learning exercise.
     AI assistant will be aware of the fact that the users are new to the language and are learning it.
     AI assistant will provide simple beginner firendly sentences/verbs initially.
+    AI assistant will generate sentences according to the provided situation. If no situation is provided, generate general sentences.
+    If a situation "at a school, as a student" is provided, generate sentences related to the provided situation (school, or in a class) such as: "I _ to school 5 times a week.", "We _ football at school.", etc.
+    If the situation is vulgar/inappropriate, ignore it and generate general situation sentences.
     The AI should produce an array of five sentences that align with the template structure, incorporating verbs appropriately into the sentences while maintaining the blank spaces indicated by "_".
     AI should provide an array of the corresponding verbs that will be filled in the _ blanks following this structure: { word: "eat", correct: 2 }. Where "word" is the general base form of verb and "correctWord" is the correct form of verb that will complete the sentence in the sentence array. And "correct" is the index of corresponding sentence in the sentence array.
     AI should ensure that the "correct" property in the verbs array should be the index of corresponding sentence.
@@ -70,7 +73,10 @@ export async function POST(req) {
       },
       {
         role: "user",
-        content: `Generate JSON response of other new 5 ${language} sentences and their corresponding verbs (general verb and correct form of verb) strictly following this template:
+        content: `Generate JSON response of 5 new ${language} sentences according to situation (${
+          situation !== "" ? situation : "general situation"
+        }). Note: If the situation is vulgar/inappropriate, ignore it and generate general situation sentences.
+        Also generate their corresponding verbs (word and its correct matching sentence's index) strictly following this template:
         {
           verbs: [
             { word: "drink", correct: 0 },
@@ -89,7 +95,7 @@ export async function POST(req) {
         }`,
       },
     ],
-    model: "gpt-3.5-turbo",
+    model: "gpt-4",
   });
 
   const chat = chatCompletion.choices[0];

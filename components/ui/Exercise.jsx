@@ -59,9 +59,20 @@ export default function Exercise() {
     }
     setGenerateButton(true);
     try {
-      const res = await axios.post("/api/chat/generate", {
+      const toastRes = axios.post("/api/chat/generate", {
         language: language,
+        situation: situation,
       });
+      toast.promise(toastRes, {
+        loading: "Generating...",
+        success: "Succesfully generated blanks!",
+        error: (e) => {
+          console.log(e);
+          setGenerateButton(false);
+          return "An error occured. Please try again!";
+        },
+      });
+      const res = await toastRes;
       const { data } = res;
       console.log(data.verbs);
 
@@ -70,15 +81,12 @@ export default function Exercise() {
         .sort((a, b) => a.sort - b.sort)
         .map(({ value }) => value);
 
-      toast.success("Succesfully generated blanks.");
-
       setVerbs(shuffledVerbs);
       setBlanks(data.sentences);
       setGenerateButton(false);
       setPhase("second");
     } catch (error) {
       setGenerateButton(false);
-      toast.error("An error occured. Please try again.");
       console.log(error);
     }
   };
@@ -127,7 +135,6 @@ export default function Exercise() {
       console.log(data);
     } catch (error) {
       setCheckButton(false);
-      toast.error("An error occured. Please try again.");
       console.log(error);
     }
   };
