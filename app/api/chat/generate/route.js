@@ -1,32 +1,13 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { openai } from "@/lib/openai";
 
 export async function POST(req) {
-  const request = await req.json();
-  const { language, situation } = request;
-  // difficulty level in future
-  // const template = {
-  //   verbs: [
-  //     { word: "eat", correct: 2 },
-  //     { word: "play", correct: 1 },
-  //     { word: "sing", correct: 4 },
-  //     { word: "drink", correct: 0 },
-  //     { word: "walk", correct: 3 },
-  //   ],
-  //   sentences: [
-  //     "I like to _ water",
-  //     "She _ tennis regularly.",
-  //     "The cat only _ fish.",
-  //     "_ is good for health.",
-  //     "He _ very good songs.",
-  //   ],
-  // };
-  const prompt = {
-    role: "system",
-    content: `You are an AI assistant.
+  try {
+    const request = await req.json();
+    const { language, situation } = request;
+
+    const prompt = {
+      role: "system",
+      content: `You are an AI assistant.
     AI assistant is a versatile, state-of-the-art language learning companion designed to assist users in various language-related tasks and exercises.
     The characteristics of this AI include adaptability, accuracy, and proficiency in multiple languages.
     AI is proficient in English, Spanish, French, German, Italian.
@@ -62,20 +43,20 @@ export async function POST(req) {
     AI should ensure that the "correct" property in the verbs array should be the index of corresponding sentence.
     The AI response of generated sentences should follow the pattern of the provided template.
     `,
-  };
-  const chatCompletion = await openai.chat.completions.create({
-    messages: [
-      prompt,
-      {
-        role: "assistant",
-        content:
-          '{\n  "verbs": [\n    { "word": "drink", "correct": 0 },\n    { "word": "play", "correct": 1 },\n    { "word": "eat", "correct": 2 },\n    { "word": "walk", "correct": 3 },\n    { "word": "sing", "correct": 4 }\n  ],\n  "sentences": [\n    "I like to _ water",\n    "She _ tennis regularly.",\n    "The cat only _ fish.",\n    "_ is good for health.",\n    "He _ very good songs."\n  ]\n}',
-      },
-      {
-        role: "user",
-        content: `Generate JSON response of 5 new ${language} sentences according to situation (${
-          situation !== "" ? situation : "general situation"
-        }). Note: If the situation is vulgar/inappropriate, ignore it and generate general situation sentences.
+    };
+    const chatCompletion = await openai.chat.completions.create({
+      messages: [
+        prompt,
+        {
+          role: "assistant",
+          content:
+            '{\n  "verbs": [\n    { "word": "drink", "correct": 0 },\n    { "word": "play", "correct": 1 },\n    { "word": "eat", "correct": 2 },\n    { "word": "walk", "correct": 3 },\n    { "word": "sing", "correct": 4 }\n  ],\n  "sentences": [\n    "I like to _ water",\n    "She _ tennis regularly.",\n    "The cat only _ fish.",\n    "_ is good for health.",\n    "He _ very good songs."\n  ]\n}',
+        },
+        {
+          role: "user",
+          content: `Generate JSON response of 5 new ${language} sentences according to situation (${
+            situation !== "" ? situation : "general situation"
+          }). Note: If the situation is vulgar/inappropriate, ignore it and generate general situation sentences.
         Also generate their corresponding verbs (word and its correct matching sentence's index) strictly following this template:
         {
           verbs: [
@@ -93,17 +74,22 @@ export async function POST(req) {
             "He _ very good songs.",
           ],
         }`,
-      },
-    ],
-    model: "gpt-4",
-  });
+        },
+      ],
+      model: "gpt-4",
+    });
 
-  const chat = chatCompletion.choices[0];
+    const chat = chatCompletion.choices[0];
 
-  const res = JSON.parse(chat.message.content);
+    const res = JSON.parse(chat.message.content);
 
-  return Response.json(res);
+    return Response.json(res);
+  } catch (error) {
+    console.error("An error occurred:", error);
+    return new Response("An error occurred", { status: 500 });
+  }
 }
 
+// difficulty level in future
 // plan A : generate multiple correct forms of verb and the sentence with GPT and evaluate on our own on the UI.
 // plan B : generate verb and sentence with GPT and collect response from UI and send it again to GPT for evaluation.

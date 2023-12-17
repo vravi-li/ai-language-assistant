@@ -1,24 +1,13 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { openai } from "@/lib/openai";
 
 export async function POST(req) {
-  const request = await req.json();
-  const { sentences } = request;
+  try {
+    const request = await req.json();
+    const { sentences } = request;
 
-  // const sentences = [
-  //   "They goes to the park every Sunday.",
-  //   "The dog barks loudly at night.",
-  //   "We swimming in the pool yesterday.",
-  //   "She reads books every evening.",
-  //   "He play football with his friends.",
-  // ];
-
-  const prompt = {
-    role: "system",
-    content: `You are an AI assistant.
+    const prompt = {
+      role: "system",
+      content: `You are an AI assistant.
     AI assistant is a versatile, state-of-the-art language learning companion designed to assist users in various language-related tasks and exercises.
     The characteristics of this AI include adaptability, accuracy, and proficiency in multiple languages.
     AI is proficient in English, Spanish, French, German, Italian.
@@ -52,13 +41,13 @@ export async function POST(req) {
     AI should ensure that the "explanation", in case of wrong verb, should be simple and straightforward.
     The AI response of generated sentences should follow the pattern of the provided template.
     `,
-  };
-  const chatCompletion = await openai.chat.completions.create({
-    messages: [
-      prompt,
-      {
-        role: "user",
-        content: `Generate JSON response by analyzing these sentences (general verb and correct form of verb) strictly following the defined Output Block template (return array with objects of corresponding sentences containing "isVerbCorrect" and "explanation" properties).
+    };
+    const chatCompletion = await openai.chat.completions.create({
+      messages: [
+        prompt,
+        {
+          role: "user",
+          content: `Generate JSON response by analyzing these sentences (general verb and correct form of verb) strictly following the defined Output Block template (return array with objects of corresponding sentences containing "isVerbCorrect" and "explanation" properties).
         Sentences Input block:
         [
           "They goes to the park every Sunday.",
@@ -67,25 +56,29 @@ export async function POST(req) {
           "She reads books every evening.",
           "He play football with his friends.",
         ]`,
-      },
-      {
-        role: "assistant",
-        content:
-          '[\n  { "isVerbCorrect": false, "explanation": "Incorrect verb form used (\'goes\' should be \'go\' to match the subject \'They\')." },\n  { "isVerbCorrect": true, "explanation": "The verb used in this sentence is correct." },\n  { "isVerbCorrect": false, "explanation": "Incorrect verb form used (\'swimming\' should be \'swam\')." },\n  { "isVerbCorrect": true, "explanation": "The verb used in this sentence is correct." },\n  { "isVerbCorrect": false, "explanation": "Incorrect verb form used (\'play\' should be \'plays\' to match the subject \'He\')." }\n]',
-      },
-      {
-        role: "user",
-        content: `Great. Now similarly, generate JSON response by analyzing these sentences (general verb and correct form of verb) strictly following the defined Output Block template (return array with objects of corresponding sentences containing "isVerbCorrect" and "explanation" properties).
+        },
+        {
+          role: "assistant",
+          content:
+            '[\n  { "isVerbCorrect": false, "explanation": "Incorrect verb form used (\'goes\' should be \'go\' to match the subject \'They\')." },\n  { "isVerbCorrect": true, "explanation": "The verb used in this sentence is correct." },\n  { "isVerbCorrect": false, "explanation": "Incorrect verb form used (\'swimming\' should be \'swam\')." },\n  { "isVerbCorrect": true, "explanation": "The verb used in this sentence is correct." },\n  { "isVerbCorrect": false, "explanation": "Incorrect verb form used (\'play\' should be \'plays\' to match the subject \'He\')." }\n]',
+        },
+        {
+          role: "user",
+          content: `Great. Now similarly, generate JSON response by analyzing these sentences (general verb and correct form of verb) strictly following the defined Output Block template (return array with objects of corresponding sentences containing "isVerbCorrect" and "explanation" properties).
         Sentences Input block:
         ${sentences}`,
-      },
-    ],
-    model: "gpt-4",
-  });
+        },
+      ],
+      model: "gpt-4",
+    });
 
-  const chat = chatCompletion.choices[0];
+    const chat = chatCompletion.choices[0];
 
-  const response = JSON.parse(chat.message.content);
+    const response = JSON.parse(chat.message.content);
 
-  return Response.json(response);
+    return Response.json(response);
+  } catch (error) {
+    console.error("An error occurred:", error);
+    return new Response("An error occurred", { status: 500 });
+  }
 }
