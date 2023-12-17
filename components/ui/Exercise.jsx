@@ -6,6 +6,8 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import Check from "../icons/Check";
 import Cancel from "../icons/Cancel";
+import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 export default function Exercise() {
   // states
@@ -45,8 +47,14 @@ export default function Exercise() {
   // API calls
   // calls generate chat api to generate verbs and sentences
   const generateBlanks = async () => {
-    if (!language) {
-      alert("Please select a language first.");
+    if (language == "DEFAULT") {
+      toast("Please select a language first.", {
+        icon: "⚠️",
+        style: {
+          background: "#fcff9c",
+          border: "2px solid #ffac40",
+        },
+      });
       return;
     }
     setGenerateButton(true);
@@ -59,6 +67,8 @@ export default function Exercise() {
       .sort((a, b) => a.sort - b.sort)
       .map(({ value }) => value);
 
+    toast.success("Succesfully generated blanks.");
+
     setVerbs(shuffledVerbs);
     setBlanks(data.sentences);
     setGenerateButton(false);
@@ -70,7 +80,11 @@ export default function Exercise() {
     // checks if all blanks filled
     for (const ans of answers) {
       if (ans.length == 0) {
-        console.log("Please fill all the blanks first.");
+        toast.error("Please fill all the blanks.", {
+          style: {
+            border: "2px solid red",
+          },
+        });
         return;
       }
     }
@@ -84,7 +98,16 @@ export default function Exercise() {
 
     // console.log(filled);
     // calls api to check the anwers
-    const res = await axios.post("/api/chat/result", { sentences: filled });
+    const toastRes = axios.post("/api/chat/result", { sentences: filled });
+
+    toast.promise(toastRes, {
+      loading: "Checking the submitted answers...",
+      success: "Succesfully checked!",
+      error: "An error occured. Please try again!",
+    });
+
+    const res = await toastRes;
+
     const { data } = res;
     setResponses(data);
     setCheckButton(false);
@@ -94,6 +117,7 @@ export default function Exercise() {
 
   return (
     <Card className="mx-auto sm:w-[80%] ">
+      <Toaster position="top-center" reverseOrder={false} />
       <CardHeader>
         <h2 className="text-2xl font-bold">Fill in the Verbs</h2>
       </CardHeader>
@@ -108,7 +132,7 @@ export default function Exercise() {
             </Label>
             {/* <Select /> */}
             <select
-              className="select select-bordered w-full max-w-xs col-start-2 col-span-3"
+              className="select select-bordered w-full max-w-xs col-start-2 col-span-3 min-h-[2.5rem] h-[2.5rem]"
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
             >
@@ -128,8 +152,8 @@ export default function Exercise() {
             </Label>
             <input
               type="text"
-              className="col-start-2 col-span-7 focus:outline-none px-3 py-2 border border-zinc-200 rounded-sm text-sm"
-              placeholder="E.g. At the restaurant, On a vacation, etc."
+              className="col-start-2 col-span-7 focus:outline-none px-3 py-2 border border-zinc-300 rounded-sm text-sm"
+              placeholder="Optional (E.g. At the restaurant, On a vacation, etc.)"
               value={situation}
               onChange={(e) => setSituation(e.target.value)}
             />
@@ -177,34 +201,32 @@ export default function Exercise() {
                 </ul>
               </div>
               {/* blanks */}
-              <>
-                {blanks.map((s, i) => {
-                  const splittedSentence = s.split("_");
-                  return (
-                    <div
-                      className="grid grid-cols-8 items-center gap-4 my-1"
-                      key={i}
-                    >
-                      <Label className="text-left" htmlFor="sentence1">
-                        Sentence {i}
-                      </Label>
-                      <div className="flex col-start-2 col-span-7 items-center">
-                        <p>{splittedSentence[0]}</p>
-                        <input
-                          type="text"
-                          className="border-b border-zinc-200 focus:outline-none focus:border-blue-300 text-center w-24 mx-2 text-blue-700"
-                          maxLength={11}
-                          value={answers[i]}
-                          onChange={(e) => handleInputChange(e, i)}
-                        />
-                        <p>{splittedSentence[1]}</p>
-                        {responses[i] &&
-                          (responses[i].isVerbCorrect ? <Check /> : <Cancel />)}
-                      </div>
+              {blanks.map((s, i) => {
+                const splittedSentence = s.split("_");
+                return (
+                  <div
+                    className="grid grid-cols-8 items-center gap-4 my-8"
+                    key={i}
+                  >
+                    <Label className="text-left" htmlFor="sentence1">
+                      Sentence {i}
+                    </Label>
+                    <div className="flex col-start-2 col-span-7 items-center">
+                      <p>{splittedSentence[0]}</p>
+                      <input
+                        type="text"
+                        className="border-b border-zinc-200 focus:outline-none focus:border-blue-300 text-center w-24 mx-2 text-blue-700"
+                        maxLength={11}
+                        value={answers[i]}
+                        onChange={(e) => handleInputChange(e, i)}
+                      />
+                      <p>{splittedSentence[1]}</p>
+                      {responses[i] &&
+                        (responses[i].isVerbCorrect ? <Check /> : <Cancel />)}
                     </div>
-                  );
-                })}
-              </>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -238,7 +260,7 @@ export default function Exercise() {
             <ul className="flex gap-2 flex-col my-3">
               {responses.map((res, i) => {
                 return (
-                  <li>
+                  <li key={i} className="my-2">
                     <p>
                       <span className="font-semibold">Sentence {i}: </span>{" "}
                       {res.explanation}
