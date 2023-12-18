@@ -44,6 +44,12 @@ export default function Exercise() {
     setAnswers(Array(blanks.length).fill(""));
   };
 
+  // continue exercise
+  const continueExercise = () => {
+    setPhase("first");
+    setResponses([]);
+  };
+
   // API calls
   // calls generate chat api to generate verbs and sentences
   const generateBlanks = async () => {
@@ -74,7 +80,6 @@ export default function Exercise() {
       });
       const res = await toastRes;
       const { data } = res;
-      console.log(data.verbs);
 
       const shuffledVerbs = data.verbs
         .map((value) => ({ value, sort: Math.random() }))
@@ -109,11 +114,11 @@ export default function Exercise() {
       // convert blanks into complete sentences array
       const filled = [];
       blanks.forEach((s, i) => {
-        const finalAnswer = s.replace("_", answers[i]);
+        const trimmedAnswer = answers[i].trim();
+        const finalAnswer = s.replace("_", trimmedAnswer);
         filled.push(finalAnswer);
       });
 
-      // console.log(filled);
       // calls api to check the anwers
       const toastRes = axios.post("/api/chat/result", { sentences: filled });
 
@@ -132,7 +137,6 @@ export default function Exercise() {
       setResponses(data);
       setCheckButton(false);
       setPhase("third");
-      console.log(data);
     } catch (error) {
       setCheckButton(false);
       console.log(error);
@@ -295,7 +299,7 @@ export default function Exercise() {
             </ul>
             <Button
               className="mx-2 bg-green-500 text-white hover:bg-green-700"
-              onClick={() => setPhase("first")}
+              onClick={continueExercise}
             >
               Continue
             </Button>
