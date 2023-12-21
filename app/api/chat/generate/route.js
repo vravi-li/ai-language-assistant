@@ -24,7 +24,7 @@ export async function POST(req) {
       "She _ tennis regularly.",
       "He _ as a captain of school team for 3 years now.",
       "They _ basketball in the court right now.",
-      "He _ as a rgiht-back in the squad.",
+      "He _ as a rgiht-back in the squad."
     ]
     END OF TEMPLATE BLOCK
 
@@ -52,14 +52,14 @@ export async function POST(req) {
         {
           role: "assistant",
           content:
-            '[  "The kids _ all around the playground.",  "He _ past the slide and headed straight for the monkey bars.",  "The children _ around the playground for hours; they must be tired.",  "After lunch, the students _ freely on the playground.",  "She _ faster than anyone else during the playground races.",]',
+            '[  "The kids _ all around the playground.",  "He _ past the slide and headed straight for the monkey bars.",  "The children _ around the playground for hours; they must be tired.",  "After lunch, the students _ freely on the playground.",  "She _ faster than anyone else during the playground races."]',
         },
         {
           role: "user",
           content: `Great! You have provided 5 sentences having different conjugations of the verb "run" and situation "at a playground".
           Your provided sentences:
           
-          [  "The kids _ all around the playground.",  "He _ past the slide and headed straight for the monkey bars.",  "The children _ around the playground for hours; they must be tired.",  "After lunch, the students _ freely on the playground.",  "She _ faster than anyone else during the playground races.",]
+          [  "The kids _ all around the playground.",  "He _ past the slide and headed straight for the monkey bars.",  "The children _ around the playground for hours; they must be tired.",  "After lunch, the students _ freely on the playground.",  "She _ faster than anyone else during the playground races."]
           
           After filling in the conjugations of verb "run":
             "The kids run all around the playground." (present simple tense)
