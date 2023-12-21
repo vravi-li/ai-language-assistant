@@ -27,6 +27,7 @@ export default function Exercise() {
   // buttons states
   const [generateButton, setGenerateButton] = useState(false);
   const [checkButton, setCheckButton] = useState(false);
+  const [verbsButton, setVerbsButton] = useState(false);
 
   // copies verb
   const copyVerbToClipboard = async (word) => {
@@ -55,8 +56,10 @@ export default function Exercise() {
 
   // select verb
   const selectVerb = (v) => {
+    setPhase("second");
+    setResponses([]);
     setSelectedVerb(v);
-    generateBlanks();
+    generateBlanks(v);
     console.log(v);
   };
 
@@ -91,7 +94,7 @@ export default function Exercise() {
       const res = await toastRes;
       const { data } = res;
 
-      setVerbs(data.verbs);
+      setVerbs(data);
       setGenerateButton(false);
       setPhase("second");
     } catch (error) {
@@ -101,29 +104,31 @@ export default function Exercise() {
   };
 
   // calls generate chat api to generate verbs and sentences
-  const generateBlanks = async () => {
+  const generateBlanks = async (verb) => {
+    setVerbsButton(true);
     try {
       const toastRes = axios.post("/api/chat/generate", {
         language: language,
         situation: situation,
-        verb: selectedVerb,
+        verb: verb,
       });
       toast.promise(toastRes, {
         loading: "Generating...",
         success: "Succesfully generated blanks!",
         error: (e) => {
           console.log(e);
-          setGenerateButton(false);
           return "An error occured. Please try again!";
         },
       });
       const res = await toastRes;
       const { data } = res;
 
-      setBlanks(data.sentences);
+      setBlanks(data);
       setPhase("third");
+      setVerbsButton(false);
     } catch (error) {
       console.log(error);
+      setVerbsButton(false);
     }
   };
 
@@ -141,6 +146,7 @@ export default function Exercise() {
       }
     }
     setCheckButton(true);
+    setVerbsButton(true);
     try {
       // convert blanks into complete sentences array
       const filled = [];
@@ -167,9 +173,11 @@ export default function Exercise() {
       const { data } = res;
       setResponses(data);
       setCheckButton(false);
+      setVerbsButton(false);
       setPhase("fourth");
     } catch (error) {
       setCheckButton(false);
+      setVerbsButton(false);
       console.log(error);
     }
   };
@@ -256,11 +264,13 @@ export default function Exercise() {
                           selectedVerb == v
                             ? "-2 bg-zinc-200 border-zinc-400"
                             : " border-zinc-300"
-                        }   px-3 py-1 rounded-md cursor-pointer hover:shadow-md`}
+                        }   px-3 py-1 rounded-md ${
+                          !verbsButton ? "cursor-pointer hover:shadow-md" : ""
+                        }`}
                         onClick={() => {
-                          phase == "second"
-                            ? selectVerb(v)
-                            : copyVerbToClipboard(v);
+                          // phase == "second" ?
+                          selectVerb(v);
+                          // : copyVerbToClipboard(v);
                         }}
                       >
                         {v}
