@@ -15,6 +15,7 @@ export default function Exercise() {
   const [language, setLanguage] = useState("DEFAULT");
   const [blanks, setBlanks] = useState([]);
   const [verbs, setVerbs] = useState([]);
+  const [selectedVerb, setSelectedVerb] = useState("");
   const [answers, setAnswers] = useState(Array(blanks.length).fill(""));
   const [responses, setResponses] = useState([]);
   const [phase, setPhase] = useState("first");
@@ -26,6 +27,7 @@ export default function Exercise() {
   // buttons states
   const [generateButton, setGenerateButton] = useState(false);
   const [checkButton, setCheckButton] = useState(false);
+  const [verbsButton, setVerbsButton] = useState(false);
 
   // copies verb
   const copyVerbToClipboard = async (word) => {
@@ -48,11 +50,22 @@ export default function Exercise() {
   const continueExercise = () => {
     setPhase("first");
     setResponses([]);
+    setAnswers(Array(blanks.length).fill(""));
+    setSelectedVerb("");
+  };
+
+  // select verb
+  const selectVerb = (v) => {
+    setPhase("second");
+    setResponses([]);
+    setSelectedVerb(v);
+    generateBlanks(v);
+    console.log(v);
   };
 
   // API calls
-  // calls generate chat api to generate verbs and sentences
-  const generateBlanks = async () => {
+  // calls generate verbs api to generate verbs according to the situation
+  const generateVerbs = async () => {
     if (language == "DEFAULT") {
       toast("Please select a language first.", {
         icon: "⚠️",
@@ -65,13 +78,13 @@ export default function Exercise() {
     }
     setGenerateButton(true);
     try {
-      const toastRes = axios.post("/api/chat/generate", {
+      const toastRes = axios.post("/api/chat/generate-verbs", {
         language: language,
         situation: situation,
       });
       toast.promise(toastRes, {
-        loading: "Generating...",
-        success: "Succesfully generated blanks!",
+        loading: "Generating verbs...",
+        success: "Succesfully generated verbs!",
         error: (e) => {
           console.log(e);
           setGenerateButton(false);
@@ -81,18 +94,41 @@ export default function Exercise() {
       const res = await toastRes;
       const { data } = res;
 
-      const shuffledVerbs = data.verbs
-        .map((value) => ({ value, sort: Math.random() }))
-        .sort((a, b) => a.sort - b.sort)
-        .map(({ value }) => value);
-
-      setVerbs(shuffledVerbs);
-      setBlanks(data.sentences);
+      setVerbs(data);
       setGenerateButton(false);
       setPhase("second");
     } catch (error) {
       setGenerateButton(false);
       console.log(error);
+    }
+  };
+
+  // calls generate chat api to generate verbs and sentences
+  const generateBlanks = async (verb) => {
+    setVerbsButton(true);
+    try {
+      const toastRes = axios.post("/api/chat/generate", {
+        language: language,
+        situation: situation,
+        verb: verb,
+      });
+      toast.promise(toastRes, {
+        loading: "Generating...",
+        success: "Succesfully generated blanks!",
+        error: (e) => {
+          console.log(e);
+          return "An error occured. Please try again!";
+        },
+      });
+      const res = await toastRes;
+      const { data } = res;
+
+      setBlanks(data);
+      setPhase("third");
+      setVerbsButton(false);
+    } catch (error) {
+      console.log(error);
+      setVerbsButton(false);
     }
   };
 
@@ -110,6 +146,7 @@ export default function Exercise() {
       }
     }
     setCheckButton(true);
+    setVerbsButton(true);
     try {
       // convert blanks into complete sentences array
       const filled = [];
@@ -136,9 +173,11 @@ export default function Exercise() {
       const { data } = res;
       setResponses(data);
       setCheckButton(false);
-      setPhase("third");
+      setVerbsButton(false);
+      setPhase("fourth");
     } catch (error) {
       setCheckButton(false);
+      setVerbsButton(false);
       console.log(error);
     }
   };
@@ -147,7 +186,7 @@ export default function Exercise() {
     <Card className="mx-auto sm:w-[80%] border-zinc-200 shadow-lg">
       <Toaster position="top-center" reverseOrder={false} />
       <CardHeader>
-        <h2 className="text-2xl font-bold">Fill in the Verbs</h2>
+        <h2 className="text-2xl font-bold">Fill in the Conjugations</h2>
       </CardHeader>
       <CardContent>
         <p className="text-gray-500 dark:text-gray-400">
@@ -158,7 +197,6 @@ export default function Exercise() {
             <Label className="text-left" htmlFor="language">
               Language
             </Label>
-            {/* <Select /> */}
             <select
               className="select select-bordered w-full max-w-xs col-start-2 col-span-3 min-h-[2.5rem] h-[2.5rem]"
               value={language}
@@ -193,7 +231,7 @@ export default function Exercise() {
               <div className="col-span-8 flex justify-end">
                 <Button
                   className="mx-2 bg-blue-500 text-white"
-                  onClick={generateBlanks}
+                  onClick={generateVerbs}
                   disabled={generateButton}
                 >
                   Generate
@@ -208,58 +246,72 @@ export default function Exercise() {
               <hr className="my-3" />
               <h1 className="font-bold text-lg my-2">Exercise</h1>
               {/* verbs */}
-              <div className="grid grid-cols-8 items-center gap-4">
+              <div className="flex flex-col gap-4">
                 <Label className="text-left" htmlFor="verb">
-                  Verbs
+                  Verbs{" "}
+                  <span className="text-zinc-500 font-normal">
+                    (Select any one of the following verbs to generate
+                    sentences)
+                  </span>
                 </Label>
-                <ul className="flex gap-3 col-start-2 col-span-7">
+                <ul className="flex gap-3">
                   {verbs.map((v) => {
-                    const { word, correct } = v;
                     return (
                       <li
-                        key={correct}
-                        value={correct}
-                        className="border border-zinc-300 px-3 py-1 rounded-md cursor-pointer hover:shadow-md"
-                        onClick={() => copyVerbToClipboard(word)}
+                        key={v}
+                        value={v}
+                        className={`border${
+                          selectedVerb == v
+                            ? "-2 bg-zinc-200 border-zinc-400"
+                            : " border-zinc-300"
+                        }   px-3 py-1 rounded-md ${
+                          !verbsButton ? "cursor-pointer hover:shadow-md" : ""
+                        }`}
+                        onClick={() => {
+                          // phase == "second" ?
+                          selectVerb(v);
+                          // : copyVerbToClipboard(v);
+                        }}
                       >
-                        {word}
+                        {v}
                       </li>
                     );
                   })}
                 </ul>
               </div>
               {/* blanks */}
-              {blanks.map((s, i) => {
-                const splittedSentence = s.split("_");
-                return (
-                  <div
-                    className="grid grid-cols-8 items-center gap-4 my-8"
-                    key={i}
-                  >
-                    <Label className="text-left" htmlFor="sentence1">
-                      Sentence {i}
-                    </Label>
-                    <div className="flex col-start-2 col-span-7 items-center">
-                      <p>{splittedSentence[0]}</p>
-                      <input
-                        type="text"
-                        className="border-b border-zinc-200 focus:outline-none focus:border-blue-300 text-center w-24 mx-2 text-blue-700"
-                        maxLength={11}
-                        value={answers[i]}
-                        onChange={(e) => handleInputChange(e, i)}
-                      />
-                      <p>{splittedSentence[1]}</p>
-                      {responses[i] &&
-                        (responses[i].isVerbCorrect ? <Check /> : <Cancel />)}
+              {phase !== "second" &&
+                blanks.map((s, i) => {
+                  const splittedSentence = s.split("_");
+                  return (
+                    <div
+                      className="grid grid-cols-8 items-center gap-4 my-8"
+                      key={i}
+                    >
+                      <Label className="text-left" htmlFor="sentence1">
+                        Sentence {i}
+                      </Label>
+                      <div className="flex col-start-2 col-span-7 items-center">
+                        <p>{splittedSentence[0]}</p>
+                        <input
+                          type="text"
+                          className="border-b border-zinc-200 focus:outline-none focus:border-blue-300 text-center w-40 mx-2 text-blue-700"
+                          maxLength={30}
+                          value={answers[i]}
+                          onChange={(e) => handleInputChange(e, i)}
+                        />
+                        <p>{splittedSentence[1]}</p>
+                        {responses[i] &&
+                          (responses[i].isVerbCorrect ? <Check /> : <Cancel />)}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           )}
         </div>
         {/* check & clear button */}
-        {phase == "second" && (
+        {phase == "third" && (
           <>
             <div className="flex justify-center py-4">
               <Button
@@ -281,7 +333,7 @@ export default function Exercise() {
         )}
 
         {/* results */}
-        {phase == "third" && (
+        {phase == "fourth" && (
           <div className="">
             <hr className="mb-4" />
             <h1 className="text-xl font-bold">Results</h1>
