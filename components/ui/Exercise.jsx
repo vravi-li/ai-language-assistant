@@ -226,7 +226,7 @@ export default function Exercise() {
           </div>
 
           {/* generate button */}
-          {phase == "first" && (
+          {(phase === "first" || phase === "second") && (
             <div className="grid grid-cols-8 items-center gap-4">
               <div className="col-span-8 flex justify-end">
                 <Button
@@ -234,7 +234,7 @@ export default function Exercise() {
                   onClick={generateVerbs}
                   disabled={generateButton}
                 >
-                  Generate
+                  {phase == "second" ? "Re-generate Verbs" : "Generate"}
                 </Button>
               </div>
             </div>
