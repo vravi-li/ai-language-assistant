@@ -9,7 +9,6 @@ export default function Home() {
       <section className="px-4 md:px-6 my-16">
         <Exercise />
       </section>
-      <Footer />
     </>
   );
 }
