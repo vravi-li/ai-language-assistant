@@ -5,11 +5,11 @@ export default function Hero() {
         <div className="flex flex-col items-center space-y-4 text-center">
           <div className="space-y-2">
             <h1 className="text-5xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl/none">
-              Language Learning with GPT-4
+              Language Learning with GPT
             </h1>
             <p className="mx-auto max-w-[800px] text-gray-500 md:text-xl dark:text-gray-400">
-              Enhance your language skills with the 'Fill in the Verbs'
-              exercise. Powered by GPT-4, it's fun and interactive.
+              Enhance your language skills with the 'Fill in the Conjugations'
+              exercise. Powered by GPT, it's fun and interactive.
             </p>
           </div>
         </div>
